@@ -38,3 +38,10 @@ keycloak_clients:
     redirect_uris:
       - "http://argocd.{{ homelab_domain }}/auth/callback"
     secret: "{{ lookup('ansible.builtin.password', secrets_dir ~ '/client_argocd_secret length=40 chars=ascii_letters,digits') }}"
+  - id: openbao
+    name: OpenBao
+    root_url: "http://openbao.{{ homelab_domain }}"
+    redirect_uris:
+      - "http://openbao.{{ homelab_domain }}/ui/vault/auth/oidc/oidc/callback"
+      - "http://localhost:8250/oidc/callback"   # connexion en CLI : bao login -method=oidc
+    secret: "{{ lookup('ansible.builtin.password', secrets_dir ~ '/client_openbao_secret length=40 chars=ascii_letters,digits') }}"
