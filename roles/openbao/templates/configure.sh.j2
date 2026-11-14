@@ -22,6 +22,24 @@ path "secret/metadata/*" {
 }
 POLICY
 
+# Lecture des secrets par External Secrets Operator (auth Kubernetes, sans mot de passe)
+bao policy write eso-reader - <<'POLICY'
+path "secret/data/*" {
+  capabilities = ["read"]
+}
+path "secret/metadata/*" {
+  capabilities = ["read", "list"]
+}
+POLICY
+bao auth list -format=json | grep -q '"kubernetes/"' || bao auth enable kubernetes
+# Sans token_reviewer_jwt, OpenBao utilise le token de son propre pod (le chart lui donne system:auth-delegator)
+bao write auth/kubernetes/config kubernetes_host="https://kubernetes.default.svc:443"
+bao write auth/kubernetes/role/eso \
+  bound_service_account_names=external-secrets \
+  bound_service_account_namespaces=external-secrets \
+  token_policies=eso-reader \
+  token_ttl=1h
+
 # Authentification OIDC (Keycloak)
 bao auth list -format=json | grep -q '"oidc/"' || bao auth enable oidc
 bao write auth/oidc/config \
