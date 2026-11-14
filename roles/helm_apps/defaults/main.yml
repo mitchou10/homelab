@@ -1,0 +1,5 @@
+---
+helm_version: "v3.16.3"
+helm_kubeconfig: /etc/rancher/k3s/k3s.yaml
+helm_repositories: []
+helm_releases: []

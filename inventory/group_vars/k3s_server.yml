@@ -1,0 +1,21 @@
+---
+# Applications déployées via Helm (rôle helm_apps).
+# Chaque entrée = une release. Les values vont dans apps/values/<name>.yml
+helm_releases:
+  - name: whoami
+    chart: cowboysysop/whoami
+    repo_name: cowboysysop
+    repo_url: https://cowboysysop.github.io/charts
+    namespace: demo
+    values_file: whoami.yml
+    state: present
+
+  # Expose le GPU aux pods (ressource nvidia.com/gpu). Nécessite le rôle nvidia_cuda + RuntimeClass nvidia.
+  - name: nvidia-device-plugin
+    chart: nvdp/nvidia-device-plugin
+    repo_name: nvdp
+    repo_url: https://nvidia.github.io/k8s-device-plugin
+    version: "0.20.1"
+    namespace: nvidia-device-plugin
+    values_file: nvidia-device-plugin.yml
+    state: present

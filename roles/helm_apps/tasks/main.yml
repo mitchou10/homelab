@@ -1,0 +1,45 @@
+---
+- name: Vérifier la présence de helm
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm_bin
+
+- name: Installer helm
+  ansible.builtin.unarchive:
+    src: "https://get.helm.sh/helm-{{ helm_version }}-linux-amd64.tar.gz"
+    dest: /usr/local/bin
+    extra_opts: [--strip-components=1, linux-amd64/helm]
+    remote_src: true
+  when: not helm_bin.stat.exists
+
+- name: Ajouter les dépôts Helm déclarés par les releases
+  kubernetes.core.helm_repository:
+    name: "{{ item.repo_name }}"
+    repo_url: "{{ item.repo_url }}"
+  loop: "{{ helm_releases | selectattr('repo_url', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.repo_name }}"
+
+- name: Copier les fichiers de values
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../apps/values/{{ item.values_file }}"
+    dest: "/tmp/helm-values-{{ item.name }}.yml"
+    mode: "0600"
+  loop: "{{ helm_releases | selectattr('values_file', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Déployer les releases Helm
+  kubernetes.core.helm:
+    name: "{{ item.name }}"
+    chart_ref: "{{ item.chart }}"
+    chart_version: "{{ item.version | default(omit) }}"
+    release_namespace: "{{ item.namespace | default('default') }}"
+    create_namespace: true
+    kubeconfig: "{{ helm_kubeconfig }}"
+    values_files: "{{ ['/tmp/helm-values-' ~ item.name ~ '.yml'] if item.values_file is defined else omit }}"
+    release_state: "{{ item.state | default('present') }}"
+    wait: true
+  loop: "{{ helm_releases }}"
+  loop_control:
+    label: "{{ item.name }}"
