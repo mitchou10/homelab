@@ -20,8 +20,10 @@
   loop_control:
     label: "{{ item.repo_name }}"
 
-- name: Copier les fichiers de values
-  ansible.builtin.copy:
+# Les values sont rendues avec Jinja : elles peuvent utiliser les variables Ansible
+# (domaine, secrets générés...). Droits 0600 car elles peuvent contenir des secrets.
+- name: Rendre les fichiers de values
+  ansible.builtin.template:
     src: "{{ playbook_dir }}/../apps/values/{{ item.values_file }}"
     dest: "/tmp/helm-values-{{ item.name }}.yml"
     mode: "0600"
@@ -41,5 +43,13 @@
     release_state: "{{ item.state | default('present') }}"
     wait: true
   loop: "{{ helm_releases }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Supprimer les values rendues (elles peuvent contenir des secrets)
+  ansible.builtin.file:
+    path: "/tmp/helm-values-{{ item.name }}.yml"
+    state: absent
+  loop: "{{ helm_releases | selectattr('values_file', 'defined') | list }}"
   loop_control:
     label: "{{ item.name }}"
