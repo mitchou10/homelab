@@ -22,6 +22,8 @@ Argo CD la lit, la déploie et détecte les changements.
 | GPU | device plugin NVIDIA | `runtimeClassName: nvidia` + `nvidia.com/gpu: 1` |
 | Autoscaling | KEDA | un `ScaledObject` à côté de l'appli (file, cron, scale to zero) : voir [14](14-keda.md) |
 
+> **Modèles prêts à copier** : [examples/application/](../examples/application/) (Application Argo CD, values homelab, script de secrets).
+
 ## 1. Le dépôt de l'application contient
 
 1. un **chart Helm** (ou des manifests) ;
@@ -74,8 +76,9 @@ Ajouter `monapp.homelab.local` dans le `/etc/hosts` du PC (ou DNS local).
 
 Les secrets **ne sont jamais dans git**. Ils vivent dans OpenBao (KV v2 monté sur `secret/`).
 
-1. Créer le secret : interface OpenBao (connexion SSO) ou
-   `bao kv put secret/monapp DB_PASSWORD=... API_KEY=...`
+1. Créer le secret : interface OpenBao (connexion SSO), `bao kv put secret/monapp DB_PASSWORD=... API_KEY=...`, ou le script
+   [seed-secrets.sh](../examples/application/seed-secrets.sh) qui génère les mots de passe au hasard et ne modifie jamais un secret existant :
+   `./examples/application/seed-secrets.sh monapp DB_PASSWORD API_KEY KEYCLOAK_CLIENT_SECRET=...`
 2. Dans le dépôt de l'app, un `ExternalSecret` crée le `Secret` Kubernetes :
 ```yaml
 apiVersion: external-secrets.io/v1

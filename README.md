@@ -77,6 +77,7 @@ homelab/
 ├── kubeconfig/              # kubeconfig récupéré (ignoré par git, contient des secrets)
 ├── .secrets/                # mots de passe générés (ignoré par git, À SAUVEGARDER)
 ├── apps/manifests/          # manifests de test (ex. gpu-test.yaml)
+├── examples/                # modèles génériques à copier dans le dépôt d'une appli (Application Argo CD, values, secrets)
 ├── .github/workflows/       # release-please + lint des commits (workflows partagés)
 └── docs/                    # tutoriels
 ```

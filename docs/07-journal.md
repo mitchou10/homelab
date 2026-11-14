@@ -105,6 +105,11 @@ Historique de la mise en place initiale (14 novembre 2026), pour se souvenir **q
 - Vérifié : login SSO complet (Keycloak → application → `/api/auth/me` : rôles `admin`/`user`, groupes `homelab-admins`).
 - Si une synchro Argo CD reste bloquée sur l'ancienne erreur après correction : arrêter l'opération (`operation: null`) puis refresh hard.
 
+## 2026-11-14 (suite) — Exemples génériques
+
+- Ajout de `examples/application/` : Application Argo CD, values homelab (ingress Traefik, SSO, ExternalSecret) et `seed-secrets.sh`, avec un nom d'appli fictif (`monapp`) pour que ce dépôt reste sans projet.
+- `seed-secrets.sh` testé sur OpenBao : clés générées / venant de l'environnement / explicites, et idempotent (un 2ᵉ lancement ne modifie rien).
+
 ## Suite du journal
 
 Ajoute ici une ligne datée à chaque changement important (nouvelle app, upgrade k3s, panne…).
