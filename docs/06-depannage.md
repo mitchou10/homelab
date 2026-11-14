@@ -109,3 +109,11 @@ Le realm `master` impose HTTPS hors localhost. `make apps` le désactive (`sslRe
 ## Keycloak : mot de passe de la base refusé après perte de `.secrets/`
 
 Les mots de passe sont régénérés mais Postgres a gardé l'ancien. Soit restaurer `.secrets/` depuis ta sauvegarde, soit supprimer le volume Postgres (perte des données Keycloak) : `kubectl -n keycloak delete sts keycloak-postgres pvc/data-keycloak-postgres-0`, puis `make apps`.
+
+## OpenBao : « Vault is sealed » / apps qui ne lisent plus les secrets
+
+Normal après un redémarrage : `make unseal`. Si le fichier `.secrets/openbao_init.json` est introuvable, restaure-le depuis ta sauvegarde (sans lui les données sont perdues).
+
+## OpenBao : connexion OIDC refusée (« redirect_uri » invalide)
+
+L'URL de callback doit être déclarée dans le client Keycloak `openbao` (`keycloak_clients` dans `inventory/group_vars/all.yml`) **et** dans le rôle OIDC (`configure.sh.j2`). Pour modifier un client existant : console admin Keycloak (le playbook ne met à jour que la création).

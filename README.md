@@ -17,6 +17,7 @@ Ce dépôt permet de **reconstruire tout le homelab depuis zéro** : on part d'u
 | GPU | Quadro P4000, driver 580, CUDA 12.6, exposé à k3s (`nvidia.com/gpu`) |
 | SSO | Keycloak (realm `homelab`), connecté à Argo CD |
 | GitOps | Argo CD |
+| Secrets | OpenBao (SSO Keycloak), **à desceller après un redémarrage : `make unseal`** |
 | Apps | `whoami` (test), `nvidia-device-plugin` |
 
 ## Les docs, dans l'ordre
@@ -34,6 +35,7 @@ Lis-les dans cet ordre si tu repars de zéro :
 9. [docs/09-gpu-cuda.md](docs/09-gpu-cuda.md) — driver NVIDIA, CUDA et GPU dans k3s
 10. [docs/10-releases-et-commits.md](docs/10-releases-et-commits.md) — Conventional Commits et release-please
 11. [docs/11-argocd-keycloak.md](docs/11-argocd-keycloak.md) — Argo CD, Keycloak et SSO
+12. [docs/12-openbao.md](docs/12-openbao.md) — OpenBao (secrets), pourquoi pas Vault, unseal
 
 ## Version express (si tout est déjà prêt)
 
@@ -41,6 +43,7 @@ Lis-les dans cet ordre si tu repars de zéro :
 source .venv/bin/activate     # active Ansible
 make ping                     # le serveur répond ?
 make all                      # GPU + k3s + apps (make gpu / k3s / apps séparément)
+make unseal                   # après un redémarrage du serveur : desceller OpenBao
 ```
 
 ## Structure du dépôt
@@ -64,6 +67,7 @@ homelab/
 │   ├── common/              # préparation de l'OS (paquets, swap)
 │   ├── nvidia_cuda/         # driver NVIDIA, CUDA, container toolkit
 │   ├── platform/            # DNS interne, secrets, Postgres, realm Keycloak
+│   ├── openbao/             # init, unseal et configuration d'OpenBao
 │   ├── k3s/                 # installation k3s + récupération kubeconfig
 │   └── helm_apps/           # installation helm + déploiement des releases
 ├── apps/values/             # un fichier de values Helm par application

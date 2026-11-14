@@ -22,3 +22,6 @@ Idées classées par priorité. Coche au fur et à mesure.
 - [ ] **Sauvegarde** de `.secrets/` et de la base Postgres de Keycloak (`pg_dump`)
 - [ ] **Migrer les apps Helm vers des `Application` Argo CD**
 - [ ] Créer un **admin nominatif** dans Keycloak (realm master) et désactiver le compte `admin` de bootstrap
+- [ ] **Sauvegarder `.secrets/openbao_init.json`** et planifier des snapshots raft d'OpenBao
+- [ ] **External Secrets Operator** + auth Kubernetes d'OpenBao pour que les apps lisent leurs secrets
+- [ ] Durcir le descellement : plusieurs parts de clé ou auto-unseal ; révoquer le token root

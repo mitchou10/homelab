@@ -73,6 +73,15 @@ Historique de la mise en place initiale (14 novembre 2026), pour se souvenir **q
 - Piège trouvé : `--import-realm` ignore un realm existant → les clients ajoutés plus tard sont créés par Ansible via `kcadm.sh` (`roles/platform/tasks/post.yml`).
 - Vérifié : login complet scripté (michou → Keycloak → Argo CD), groupes présents dans le token.
 
+## 2026-11-14 (suite) — OpenBao
+
+- Décision : **OpenBao** plutôt que Vault (licence MPL 2.0 vs BUSL, pas de risque commercial, gouvernance Linux Foundation, compatible Vault pour notre usage). Justification complète : [12](12-openbao.md).
+- Ajout : release `openbao` (chart 0.30.7, OpenBao 2.7.2, raft 1 réplique), rôle `openbao` (init, unseal, config), `playbooks/openbao.yml`, `make unseal`, client OIDC `openbao` dans Keycloak.
+- Piège : `bao operator unseal -` ne lit pas stdin ; on utilise `bao write sys/unseal key=-`.
+- Piège : sonde de readiness par défaut échoue quand le pod est scellé → `helm --wait` bloquerait ; sonde HTTP avec `sealedcode=204&uninitcode=204`.
+- Vérifié : SSO complet scripté (michou → policy `homelab-admin` via le groupe), pod supprimé puis `make unseal` OK, données conservées.
+- Initialisation faite : clé + token root dans `.secrets/openbao_init.json` (**à sauvegarder**).
+
 ## Suite du journal
 
 Ajoute ici une ligne datée à chaque changement important (nouvelle app, upgrade k3s, panne…).
