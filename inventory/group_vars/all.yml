@@ -10,3 +10,31 @@ k3s_local_kubeconfig: "{{ playbook_dir }}/../kubeconfig/config"
 
 # --- Helm ---
 helm_version: "v3.16.3"
+
+# --- Domaine et secrets ---
+# Toutes les apps sont exposées en <app>.<homelab_domain> (HTTP, via Traefik).
+# Côté PC : ajouter les noms dans /etc/hosts (voir docs/11-argocd-keycloak.md).
+homelab_domain: homelab.local
+
+# Les mots de passe sont GÉNÉRÉS au premier lancement et stockés ici (ignoré par git).
+# À sauvegarder : les perdre ne permet plus de retrouver les mots de passe déjà utilisés par les bases.
+secrets_dir: "{{ playbook_dir }}/../.secrets"
+homelab_pw_opts: length=32 chars=ascii_letters,digits
+
+keycloak_admin_user: admin
+keycloak_admin_password: "{{ lookup('ansible.builtin.password', secrets_dir ~ '/keycloak_admin_password ' ~ homelab_pw_opts) }}"
+keycloak_db_password: "{{ lookup('ansible.builtin.password', secrets_dir ~ '/keycloak_db_password ' ~ homelab_pw_opts) }}"
+
+# Utilisateur créé par défaut dans le realm "homelab" (admin de toutes les apps)
+homelab_user: michou
+homelab_user_password: "{{ lookup('ansible.builtin.password', secrets_dir ~ '/homelab_user_password ' ~ homelab_pw_opts) }}"
+
+# Applications connectées en SSO (OIDC) : un client Keycloak par entrée, créé dans le realm "homelab".
+# Pour ajouter une app : voir docs/11-argocd-keycloak.md
+keycloak_clients:
+  - id: argocd
+    name: Argo CD
+    root_url: "http://argocd.{{ homelab_domain }}"
+    redirect_uris:
+      - "http://argocd.{{ homelab_domain }}/auth/callback"
+    secret: "{{ lookup('ansible.builtin.password', secrets_dir ~ '/client_argocd_secret length=40 chars=ascii_letters,digits') }}"
