@@ -1,0 +1,32 @@
+---
+# Fichier rendu par Ansible (Jinja) puis lu par Helm. Voir docs/11-argocd-keycloak.md
+global:
+  domain: "argocd.{{ homelab_domain }}"
+
+configs:
+  params:
+    # TLS est (pour l'instant) absent : Traefik parle en HTTP à Argo CD
+    server.insecure: true
+  cm:
+    url: "http://argocd.{{ homelab_domain }}"
+    # Connexion via Keycloak. L'adresse keycloak.<domaine> est résolue dans le cluster
+    # vers Traefik grâce à la ConfigMap coredns-custom (rôle platform).
+    oidc.config: |
+      name: Keycloak
+      issuer: http://keycloak.{{ homelab_domain }}/realms/homelab
+      clientID: argocd
+      clientSecret: $oidc.keycloak.clientSecret
+      requestedScopes: ["openid", "profile", "email"]
+  secret:
+    extra:
+      oidc.keycloak.clientSecret: "{{ (keycloak_clients | selectattr('id', 'eq', 'argocd') | first).secret }}"
+  rbac:
+    scopes: "[groups]"
+    policy.default: role:readonly
+    policy.csv: |
+      g, homelab-admins, role:admin
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
