@@ -1,0 +1,44 @@
+---
+- name: Vérifier si k3s est déjà installé
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_bin
+
+- name: Télécharger le script d'installation k3s
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s-install.sh
+    mode: "0755"
+  when: not k3s_bin.stat.exists
+
+- name: Installer k3s (server)
+  ansible.builtin.command: /tmp/k3s-install.sh server {{ k3s_extra_server_args }}
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+  args:
+    creates: /usr/local/bin/k3s
+  when: not k3s_bin.stat.exists
+
+- name: S'assurer que k3s tourne
+  ansible.builtin.systemd:
+    name: k3s
+    state: started
+    enabled: true
+
+- name: Attendre que le noeud soit Ready
+  ansible.builtin.command: k3s kubectl wait --for=condition=Ready node --all --timeout=120s
+  changed_when: false
+
+- name: Récupérer le kubeconfig
+  ansible.builtin.fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "{{ k3s_local_kubeconfig }}"
+    flat: true
+
+- name: Remplacer 127.0.0.1 par l'IP du serveur dans le kubeconfig local
+  ansible.builtin.replace:
+    path: "{{ k3s_local_kubeconfig }}"
+    regexp: "https://127.0.0.1:6443"
+    replace: "https://{{ ansible_host }}:6443"
+  delegate_to: localhost
+  become: false

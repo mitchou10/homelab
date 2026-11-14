@@ -1,0 +1,4 @@
+---
+k3s_version: ""
+k3s_extra_server_args: "--write-kubeconfig-mode 644"
+k3s_local_kubeconfig: "./kubeconfig/config"
