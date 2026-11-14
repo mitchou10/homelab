@@ -1,0 +1,6 @@
+---
+- name: Préparer les machines et installer k3s
+  hosts: k3s_server
+  roles:
+    - common
+    - k3s

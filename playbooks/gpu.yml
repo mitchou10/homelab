@@ -1,0 +1,5 @@
+---
+- name: Driver NVIDIA, CUDA et NVIDIA Container Toolkit
+  hosts: gpu
+  roles:
+    - nvidia_cuda

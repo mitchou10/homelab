@@ -1,0 +1,32 @@
+---
+- name: Déployer les applications via Helm
+  hosts: k3s_server
+  pre_tasks:
+    # Nécessaire pour le device plugin NVIDIA (runtimeClassName: nvidia)
+    - name: RuntimeClass nvidia
+      kubernetes.core.k8s:
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        state: present
+        definition:
+          apiVersion: node.k8s.io/v1
+          kind: RuntimeClass
+          metadata:
+            name: nvidia
+          handler: nvidia
+      when: "'gpu' in group_names"
+    # Le chart du device plugin ne se déploie que sur les noeuds portant ce label
+    # (normalement posé par Node Feature Discovery, qu'on n'installe pas).
+    - name: Label nvidia.com/gpu.present sur le noeud GPU
+      kubernetes.core.k8s:
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        state: patched
+        kind: Node
+        api_version: v1
+        name: "{{ ansible_hostname | lower }}"
+        definition:
+          metadata:
+            labels:
+              nvidia.com/gpu.present: "true"
+      when: "'gpu' in group_names"
+  roles:
+    - helm_apps

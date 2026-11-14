@@ -1,0 +1,6 @@
+---
+# Ordre important : le GPU (container toolkit) avant k3s pour que containerd
+# détecte le runtime nvidia au démarrage.
+- import_playbook: gpu.yml
+- import_playbook: k3s.yml
+- import_playbook: apps.yml
