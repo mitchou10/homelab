@@ -1,0 +1,17 @@
+---
+- name: Paquets de base
+  ansible.builtin.apt:
+    name: [curl, ca-certificates, python3-pip, python3-kubernetes, python3-yaml, git]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Désactiver le swap (runtime)
+  ansible.builtin.command: swapoff -a
+  changed_when: false
+
+- name: Désactiver le swap (fstab)
+  ansible.posix.mount:
+    name: none
+    fstype: swap
+    state: absent
