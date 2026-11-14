@@ -39,6 +39,7 @@ Lis-les dans cet ordre si tu repars de zéro :
 12. [docs/12-openbao.md](docs/12-openbao.md) — OpenBao (secrets), pourquoi pas Vault, unseal
 13. [docs/13-deployer-une-application.md](docs/13-deployer-une-application.md) — déployer une appli (GitOps, secrets, SSO, ingress)
 14. [docs/14-keda.md](docs/14-keda.md) — KEDA : autoscaling par événements (files, cron, jobs), avec exemples
+15. [docs/15-partage-gpu.md](docs/15-partage-gpu.md) — partager un GPU : time-slicing, MIG, MPS, HAMi, GPU Operator
 
 ## Version express (si tout est déjà prêt)
 

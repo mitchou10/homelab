@@ -110,6 +110,12 @@ Historique de la mise en place initiale (14 novembre 2026), pour se souvenir **q
 - Ajout de `examples/application/` : Application Argo CD, values homelab (ingress Traefik, SSO, ExternalSecret) et `seed-secrets.sh`, avec un nom d'appli fictif (`monapp`) pour que ce dépôt reste sans projet.
 - `seed-secrets.sh` testé sur OpenBao : clés générées / venant de l'environnement / explicites, et idempotent (un 2ᵉ lancement ne modifie rien).
 
+## 2026-11-14 (suite) — Guide du partage de GPU
+
+- Ajout de [15](15-partage-gpu.md) : comparatif MIG / time-slicing / MPS / HAMi / GPU Operator / DRA, arbre de décision, procédure pour chaque cas, diagnostic.
+- Conclusion pour ce matériel (Quadro P4000, Pascal, 8 Go) : MIG impossible, MPS probablement non, **time-slicing** recommandé.
+- Documentation seule : le GPU n'a **pas** été reconfiguré. Seul le rendu du chart du device plugin avec la config time-slicing a été contrôlé.
+
 ## Suite du journal
 
 Ajoute ici une ligne datée à chaque changement important (nouvelle app, upgrade k3s, panne…).

@@ -77,7 +77,7 @@ spec:
 ```
 
 > Un GPU = **un seul pod à la fois** (pas de partage par défaut). Un 2e pod qui demande le GPU restera `Pending`.
-> Le partage (time-slicing) est possible via la config du device plugin, non fait ici.
+> Le partage (time-slicing, MPS, MIG, HAMi) est expliqué dans [15](15-partage-gpu.md) : sur cette carte, le **time-slicing** est le choix adapté.
 
 ## Variables
 

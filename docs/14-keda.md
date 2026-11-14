@@ -206,7 +206,8 @@ Catalogue : https://keda.sh/docs/latest/scalers/
 ## GPU
 
 Un GPU ne sert qu'**un pod à la fois** sur ce serveur (un seul GPU, voir [09](09-gpu-cuda.md)). Un `ScaledObject` qui demande plus d'un pod
-avec `nvidia.com/gpu: 1` laissera les pods supplémentaires en `Pending`. Pour des workers GPU : `maxReplicaCount: 1`.
+avec `nvidia.com/gpu: 1` laissera les pods supplémentaires en `Pending`. Pour des workers GPU : `maxReplicaCount: 1`,
+ou activer le partage du GPU (time-slicing : [15](15-partage-gpu.md)) et ne pas dépasser le nombre de parts.
 
 ## Où mettre le `ScaledObject` ?
 

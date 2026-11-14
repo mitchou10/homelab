@@ -17,7 +17,7 @@ Idées classées par priorité. Coche au fur et à mesure.
 - [ ] **Mises à jour** : procédure d'upgrade k3s (changer `k3s_version`, relancer `make k3s`)
 - [ ] **2e nœud** : groupe `k3s_agent` + rôle d'ajout d'agents
 - [ ] **Redémarrer `tour`** (`/var/run/reboot-required` présent) puis vérifier `nvidia-smi` et le pod `gpu-test`
-- [ ] **Partage du GPU** entre pods (time-slicing du device plugin) si besoin
+- [ ] **Partage du GPU** entre pods : choix et procédures dans [15](15-partage-gpu.md) (time-slicing recommandé), à appliquer si besoin
 - [ ] **TLS** (cert-manager) puis retirer `sslRequired=NONE` du realm master et passer les URLs en https
 - [ ] **Sauvegarde** de `.secrets/` et de la base Postgres de Keycloak (`pg_dump`)
 - [ ] **Migrer les apps Helm vers des `Application` Argo CD**
