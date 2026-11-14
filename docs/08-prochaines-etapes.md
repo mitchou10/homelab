@@ -23,5 +23,6 @@ Idées classées par priorité. Coche au fur et à mesure.
 - [ ] **Migrer les apps Helm vers des `Application` Argo CD**
 - [ ] Créer un **admin nominatif** dans Keycloak (realm master) et désactiver le compte `admin` de bootstrap
 - [ ] **Sauvegarder `.secrets/openbao_init.json`** et planifier des snapshots raft d'OpenBao
-- [ ] **External Secrets Operator** + auth Kubernetes d'OpenBao pour que les apps lisent leurs secrets
+- [x] External Secrets Operator + auth Kubernetes d'OpenBao (fait, voir [13](13-deployer-une-application.md))
+- [ ] Isoler les secrets par application (un SecretStore et un rôle OpenBao par namespace)
 - [ ] Durcir le descellement : plusieurs parts de clé ou auto-unseal ; révoquer le token root

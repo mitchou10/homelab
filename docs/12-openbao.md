@@ -83,9 +83,13 @@ Dans l'interface : Secrets → `secret/` → Create secret.
 
 Le token root (dans `openbao_init.json`) ne sert qu'à la configuration initiale et à la réparation. Le quotidien se fait en SSO. Quand tout est stable, on peut le révoquer (`bao token revoke`) et le régénérer au besoin avec `bao operator generate-root`.
 
-### Brancher des applications Kubernetes (plus tard)
+### Brancher des applications Kubernetes
 
-Pas encore installé. Option recommandée : **External Secrets Operator** (lit OpenBao, crée des `Secret` Kubernetes). Voir [08](08-prochaines-etapes.md). L'authentification Kubernetes d'OpenBao (`auth/kubernetes`) sera alors activée.
+**External Secrets Operator** (licence Apache 2.0) est installé : il lit OpenBao et crée des `Secret` Kubernetes.
+Il s'authentifie par l'**authentification Kubernetes** d'OpenBao (rôle `eso`, policy `eso-reader` : lecture seule de `secret/`),
+via le `ClusterSecretStore` **`openbao`** (créé par [eso.yml](../roles/openbao/tasks/eso.yml)). Mode d'emploi : [13](13-deployer-une-application.md).
+
+> Pourquoi pas le Vault Secrets Operator ? Il est sous licence BUSL comme Vault, ce qui irait à l'encontre du choix d'OpenBao.
 
 ## Limites actuelles
 

@@ -82,6 +82,14 @@ Historique de la mise en place initiale (14 novembre 2026), pour se souvenir **q
 - Vérifié : SSO complet scripté (michou → policy `homelab-admin` via le groupe), pod supprimé puis `make unseal` OK, données conservées.
 - Initialisation faite : clé + token root dans `.secrets/openbao_init.json` (**à sauvegarder**).
 
+## 2026-11-14 (suite) — Déploiement d'applications
+
+- Règle : **ce dépôt reste infra uniquement**, aucune config ni lien propre à un projet applicatif.
+- Ajout d'**External Secrets Operator** (chart 2.15.0), de l'authentification Kubernetes d'OpenBao (rôle `eso`) et du `ClusterSecretStore` `openbao`. Vérifié : un secret posé dans OpenBao devient un Secret Kubernetes (`SecretSynced`).
+- Extension générique des clients Keycloak : `attributes` (ex. PKCE), `client_roles`, `user_roles`, `groups_full_path` (`client.json.j2`, `post.yml`).
+- Documentation du flux complet : [13](13-deployer-une-application.md).
+- Cause d'une erreur d'une appli déployée à la main dans Argo CD : namespace de destination absent, puis chart dépendant du Vault Secrets Operator (voir tableau d'erreurs de [13](13-deployer-une-application.md)).
+
 ## Suite du journal
 
 Ajoute ici une ligne datée à chaque changement important (nouvelle app, upgrade k3s, panne…).

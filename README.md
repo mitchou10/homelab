@@ -17,7 +17,7 @@ Ce dépôt permet de **reconstruire tout le homelab depuis zéro** : on part d'u
 | GPU | Quadro P4000, driver 580, CUDA 12.6, exposé à k3s (`nvidia.com/gpu`) |
 | SSO | Keycloak (realm `homelab`), connecté à Argo CD |
 | GitOps | Argo CD |
-| Secrets | OpenBao (SSO Keycloak), **à desceller après un redémarrage : `make unseal`** |
+| Secrets | OpenBao (SSO Keycloak) + External Secrets, **à desceller après un redémarrage : `make unseal`** |
 | Apps | `whoami` (test), `nvidia-device-plugin` |
 
 ## Les docs, dans l'ordre
@@ -36,6 +36,7 @@ Lis-les dans cet ordre si tu repars de zéro :
 10. [docs/10-releases-et-commits.md](docs/10-releases-et-commits.md) — Conventional Commits et release-please
 11. [docs/11-argocd-keycloak.md](docs/11-argocd-keycloak.md) — Argo CD, Keycloak et SSO
 12. [docs/12-openbao.md](docs/12-openbao.md) — OpenBao (secrets), pourquoi pas Vault, unseal
+13. [docs/13-deployer-une-application.md](docs/13-deployer-une-application.md) — déployer une appli (GitOps, secrets, SSO, ingress)
 
 ## Version express (si tout est déjà prêt)
 
@@ -67,7 +68,7 @@ homelab/
 │   ├── common/              # préparation de l'OS (paquets, swap)
 │   ├── nvidia_cuda/         # driver NVIDIA, CUDA, container toolkit
 │   ├── platform/            # DNS interne, secrets, Postgres, realm Keycloak
-│   ├── openbao/             # init, unseal et configuration d'OpenBao
+│   ├── openbao/             # init, unseal, configuration d'OpenBao, lien avec External Secrets
 │   ├── k3s/                 # installation k3s + récupération kubeconfig
 │   └── helm_apps/           # installation helm + déploiement des releases
 ├── apps/values/             # un fichier de values Helm par application
