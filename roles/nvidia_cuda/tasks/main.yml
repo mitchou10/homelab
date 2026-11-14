@@ -1,0 +1,107 @@
+---
+- name: Paquets nécessaires (détection matériel, GPG, APT https)
+  ansible.builtin.apt:
+    name: [pciutils, gnupg, ca-certificates, curl]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Détecter une carte NVIDIA
+  ansible.builtin.shell: set -o pipefail && lspci | grep -i nvidia
+  args:
+    executable: /bin/bash
+  register: nvidia_pci
+  changed_when: false
+  failed_when: false
+
+- name: Arrêter ici s'il n'y a pas de GPU NVIDIA
+  ansible.builtin.fail:
+    msg: "Aucun GPU NVIDIA détecté sur {{ inventory_hostname }} : retire cet hôte du groupe 'gpu'."
+  when: nvidia_pci.rc != 0
+
+# ---------------------------------------------------------------- Driver
+- name: Installer le driver NVIDIA (dépôt Ubuntu)
+  ansible.builtin.apt:
+    name: "{{ nvidia_driver_package }}"
+    state: present
+  register: nvidia_driver_install
+
+# ---------------------------------------------------------------- CUDA
+# Le dépôt NVIDIA propose aussi des paquets nvidia-driver-* : on l'empêche de fournir
+# des pilotes pour que le driver ne soit JAMAIS remplacé/mis à jour par ce dépôt.
+- name: Empêcher le dépôt CUDA de fournir des drivers
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/cuda-no-driver
+    mode: "0644"
+    content: |
+      Package: nvidia-* libnvidia-* xserver-xorg-video-nvidia-* cuda-drivers* cuda-drivers-fabricmanager*
+      Pin: origin developer.download.nvidia.com
+      Pin-Priority: -1
+
+- name: Installer cuda-keyring (clé + dépôt réseau NVIDIA)
+  ansible.builtin.apt:
+    deb: "{{ cuda_keyring_url }}"
+  register: cuda_keyring
+
+- name: Installer le CUDA toolkit (sans le méta-paquet 'cuda', qui embarque un driver)
+  ansible.builtin.apt:
+    name: "cuda-toolkit-{{ cuda_toolkit_version }}"
+    state: present
+    update_cache: true
+
+- name: Variables d'environnement CUDA (PATH, LD_LIBRARY_PATH)
+  ansible.builtin.template:
+    src: cuda.sh.j2
+    dest: /etc/profile.d/cuda.sh
+    mode: "0644"
+
+# ---------------------------------------------------------------- Container toolkit
+- name: Clé GPG du NVIDIA Container Toolkit
+  ansible.builtin.shell: >-
+    set -o pipefail &&
+    curl -fsSL {{ nvidia_container_toolkit_key_url }} |
+    gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+  args:
+    executable: /bin/bash
+    creates: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+- name: Dépôt APT du NVIDIA Container Toolkit
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/nvidia-container-toolkit.list
+    mode: "0644"
+    content: |
+      deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] {{ nvidia_container_toolkit_repo_url }} /
+
+- name: Installer le NVIDIA Container Toolkit
+  ansible.builtin.apt:
+    name: nvidia-container-toolkit
+    state: present
+    update_cache: true
+  notify: Restart k3s pour le runtime nvidia
+
+# ---------------------------------------------------------------- Vérifications
+- name: Vérifier nvidia-smi
+  ansible.builtin.command: nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
+  register: nvidia_smi
+  check_mode: false
+  changed_when: false
+  failed_when: false
+
+- name: Vérifier nvcc
+  ansible.builtin.command: /usr/local/cuda-{{ cuda_toolkit_version | replace('-', '.') }}/bin/nvcc --version
+  register: nvcc
+  check_mode: false
+  changed_when: false
+  failed_when: false
+
+- name: Un redémarrage est-il nécessaire ?
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+
+- name: Résumé GPU
+  ansible.builtin.debug:
+    msg:
+      - "GPU / driver : {{ nvidia_smi.stdout if nvidia_smi.rc == 0 else 'nvidia-smi KO -> redémarrage probablement nécessaire' }}"
+      - "nvcc : {{ (nvcc.stdout_lines | last) if (nvcc.rc == 0 and nvcc.stdout_lines | length > 0) else 'introuvable' }}"
+      - "Redémarrage requis : {{ 'OUI (sudo reboot sur le serveur)' if (reboot_required.stat.exists or nvidia_smi.rc != 0) else 'non' }}"

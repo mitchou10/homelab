@@ -1,0 +1,8 @@
+---
+- name: Restart k3s pour le runtime nvidia
+  ansible.builtin.shell: |
+    if systemctl list-unit-files k3s.service | grep -q k3s.service; then
+      systemctl restart k3s
+    fi
+  when: nvidia_restart_k3s | bool
+  changed_when: true

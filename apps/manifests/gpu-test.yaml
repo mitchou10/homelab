@@ -1,0 +1,17 @@
+# Test : un pod qui lance nvidia-smi avec 1 GPU.
+#   kubectl apply -f apps/manifests/gpu-test.yaml && kubectl logs gpu-test
+#   kubectl delete pod gpu-test
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-test
+spec:
+  restartPolicy: Never
+  runtimeClassName: nvidia
+  containers:
+    - name: cuda
+      image: nvidia/cuda:12.6.3-base-ubuntu24.04
+      command: ["nvidia-smi"]
+      resources:
+        limits:
+          nvidia.com/gpu: 1

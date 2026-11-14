@@ -1,0 +1,19 @@
+---
+# Driver Ubuntu (dépôt officiel Canonical). 580 = dernière branche qui supporte les GPU Pascal (ex. Quadro P4000).
+nvidia_driver_package: nvidia-driver-580
+
+# Version du CUDA toolkit, au format des paquets APT (12-6 = CUDA 12.6).
+# Pascal n'est pas supporté par CUDA 13+ : rester en 12.x pour un P4000.
+cuda_toolkit_version: "12-6"
+
+# Dépôt réseau NVIDIA (paquet cuda-keyring)
+cuda_repo_distro: ubuntu2404
+cuda_repo_arch: x86_64
+cuda_keyring_url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ cuda_repo_distro }}/{{ cuda_repo_arch }}/cuda-keyring_1.1-1_all.deb"
+
+# NVIDIA Container Toolkit : permet à containerd (k3s) de donner le GPU aux pods
+nvidia_container_toolkit_key_url: https://nvidia.github.io/libnvidia-container/gpgkey
+nvidia_container_toolkit_repo_url: https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH)
+
+# Redémarrer k3s quand le toolkit change (pour qu'il régénère la config containerd avec le runtime nvidia)
+nvidia_restart_k3s: true

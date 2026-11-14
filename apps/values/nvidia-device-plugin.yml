@@ -1,0 +1,3 @@
+---
+# k3s utilise le runtime "nvidia" (déclaré dans containerd), via la RuntimeClass du même nom.
+runtimeClassName: nvidia
