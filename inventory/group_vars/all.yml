@@ -1,0 +1,12 @@
+---
+# --- k3s ---
+k3s_version: ""            # vide = dernière stable ; ex: v1.31.4+k3s1
+k3s_extra_server_args: >-
+  --write-kubeconfig-mode 644
+# Désactiver Traefik si tu veux ton propre ingress : ajouter --disable traefik ci-dessus
+
+# Kubeconfig récupéré en local (ignoré par git)
+k3s_local_kubeconfig: "{{ playbook_dir }}/../kubeconfig/config"
+
+# --- Helm ---
+helm_version: "v3.16.3"
