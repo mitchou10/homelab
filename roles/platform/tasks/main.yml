@@ -2,10 +2,23 @@
 # Prépare tout ce dont dépendent Keycloak et Argo CD AVANT leur déploiement Helm :
 # DNS interne, namespaces, secrets, Postgres, realm Keycloak.
 
+# Pourquoi un enregistrement A et pas un "rewrite" CoreDNS : un rewrite renvoie la réponse sous le nom de la cible
+# (traefik.kube-system...) et non sous le nom demandé. Les clients Go l'acceptent, mais le résolveur glibc (Python, curl...)
+# l'ignore : « Name or service not known ». Ici la réponse porte le bon nom.
+- name: IP de Traefik (cible de *.{{ homelab_domain }} dans le cluster)
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ platform_kubeconfig }}"
+    api_version: v1
+    kind: Service
+    name: traefik
+    namespace: kube-system
+  register: traefik_svc
+
 - name: DNS interne - *.{{ homelab_domain }} résolu vers Traefik dans le cluster
   kubernetes.core.k8s:
     kubeconfig: "{{ platform_kubeconfig }}"
     state: present
+    force: true              # remplace la ConfigMap (retire l'ancienne clé homelab.override)
     definition:
       apiVersion: v1
       kind: ConfigMap
@@ -13,8 +26,18 @@
         name: coredns-custom
         namespace: kube-system
       data:
-        homelab.override: |
-          rewrite name regex (.*)\.{{ homelab_domain | regex_replace('\.', '\\.') }} traefik.kube-system.svc.cluster.local
+        homelab.server: |
+          {{ homelab_domain }}:53 {
+              errors
+              cache 30
+              template IN A {
+                  answer "{% raw %}{{ .Name }}{% endraw %} 60 IN A {{ traefik_svc.resources[0].spec.clusterIP }}"
+              }
+              # pas d'IPv6 : réponse vide (NODATA) plutôt qu'une erreur qui ferait échouer le résolveur
+              template IN AAAA {
+                  rcode NOERROR
+              }
+          }
   register: coredns_custom
 
 - name: Redémarrer CoreDNS pour prendre en compte la config
