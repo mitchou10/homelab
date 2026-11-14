@@ -15,6 +15,8 @@ Ce dépôt permet de **reconstruire tout le homelab depuis zéro** : on part d'u
 | Ingress | Traefik (fourni par k3s) |
 | Déploiement des apps | Helm piloté par Ansible (ArgoCD prévu plus tard) |
 | GPU | Quadro P4000, driver 580, CUDA 12.6, exposé à k3s (`nvidia.com/gpu`) |
+| SSO | Keycloak (realm `homelab`), connecté à Argo CD |
+| GitOps | Argo CD |
 | Apps | `whoami` (test), `nvidia-device-plugin` |
 
 ## Les docs, dans l'ordre
@@ -31,6 +33,7 @@ Lis-les dans cet ordre si tu repars de zéro :
 8. [docs/08-prochaines-etapes.md](docs/08-prochaines-etapes.md) — ArgoCD, secrets, sauvegardes, etc.
 9. [docs/09-gpu-cuda.md](docs/09-gpu-cuda.md) — driver NVIDIA, CUDA et GPU dans k3s
 10. [docs/10-releases-et-commits.md](docs/10-releases-et-commits.md) — Conventional Commits et release-please
+11. [docs/11-argocd-keycloak.md](docs/11-argocd-keycloak.md) — Argo CD, Keycloak et SSO
 
 ## Version express (si tout est déjà prêt)
 
@@ -60,10 +63,12 @@ homelab/
 ├── roles/
 │   ├── common/              # préparation de l'OS (paquets, swap)
 │   ├── nvidia_cuda/         # driver NVIDIA, CUDA, container toolkit
+│   ├── platform/            # DNS interne, secrets, Postgres, realm Keycloak
 │   ├── k3s/                 # installation k3s + récupération kubeconfig
 │   └── helm_apps/           # installation helm + déploiement des releases
 ├── apps/values/             # un fichier de values Helm par application
 ├── kubeconfig/              # kubeconfig récupéré (ignoré par git, contient des secrets)
+├── .secrets/                # mots de passe générés (ignoré par git, À SAUVEGARDER)
 ├── apps/manifests/          # manifests de test (ex. gpu-test.yaml)
 ├── .github/workflows/       # release-please + lint des commits (workflows partagés)
 └── docs/                    # tutoriels

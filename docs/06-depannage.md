@@ -93,3 +93,19 @@ make all
 ## GPU : `nvidia-smi` échoue (`couldn't communicate with the NVIDIA driver`)
 
 Souvent après une mise à jour de noyau : le module n'est pas chargé → `sudo reboot`. Vérifier `dkms status`.
+
+## Keycloak : « HTTPS required » sur la console d'admin
+
+Le realm `master` impose HTTPS hors localhost. `make apps` le désactive (`sslRequired=NONE`, `roles/platform/tasks/post.yml`).
+À la main : `ssh tour 'sudo k3s kubectl -n keycloak exec statefulset/keycloak-keycloakx -- /opt/keycloak/bin/kcadm.sh ...'`.
+
+## Argo CD : « Log in via Keycloak » échoue / erreur OIDC
+
+- Les noms `keycloak.homelab.local` et `argocd.homelab.local` sont-ils dans le `/etc/hosts` de ton PC ?
+- Dans le cluster : `ssh tour 'sudo k3s kubectl run t --rm -i --restart=Never --image=busybox:1.36 -- nslookup keycloak.homelab.local'` doit répondre `traefik.kube-system.svc...` (sinon `kubectl -n kube-system rollout restart deploy/coredns`).
+- `kubectl -n argocd logs deploy/argocd-server | grep -i oidc`
+- Le secret du client doit être identique des deux côtés : il vient de `.secrets/client_argocd_secret`. Relancer `make apps` resynchronise tout.
+
+## Keycloak : mot de passe de la base refusé après perte de `.secrets/`
+
+Les mots de passe sont régénérés mais Postgres a gardé l'ancien. Soit restaurer `.secrets/` depuis ta sauvegarde, soit supprimer le volume Postgres (perte des données Keycloak) : `kubectl -n keycloak delete sts keycloak-postgres pvc/data-keycloak-postgres-0`, puis `make apps`.

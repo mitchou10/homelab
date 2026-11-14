@@ -18,3 +18,7 @@ Idées classées par priorité. Coche au fur et à mesure.
 - [ ] **2e nœud** : groupe `k3s_agent` + rôle d'ajout d'agents
 - [ ] **Redémarrer `tour`** (`/var/run/reboot-required` présent) puis vérifier `nvidia-smi` et le pod `gpu-test`
 - [ ] **Partage du GPU** entre pods (time-slicing du device plugin) si besoin
+- [ ] **TLS** (cert-manager) puis retirer `sslRequired=NONE` du realm master et passer les URLs en https
+- [ ] **Sauvegarde** de `.secrets/` et de la base Postgres de Keycloak (`pg_dump`)
+- [ ] **Migrer les apps Helm vers des `Application` Argo CD**
+- [ ] Créer un **admin nominatif** dans Keycloak (realm master) et désactiver le compte `admin` de bootstrap

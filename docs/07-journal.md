@@ -63,6 +63,16 @@ Historique de la mise en place initiale (14 novembre 2026), pour se souvenir **q
 - Historique git initial découpé en commits Conventional Commits par morceau.
 - À faire côté GitHub : autoriser les Actions à créer des PR (Settings → Actions → General).
 
+## 2026-11-14 (suite) — Argo CD, Keycloak, SSO
+
+- Ajout du rôle `platform` (DNS interne CoreDNS `*.homelab.local` → Traefik, secrets, Postgres, realm Keycloak), des releases `keycloak` (chart codecentric/keycloakx 7.4.0, Keycloak 26.8.1) et `argocd` (chart 10.18.0).
+- Mots de passe générés par Ansible (lookup `password`) dans `.secrets/`, jamais dans git.
+- Les values Helm sont maintenant rendues avec Jinja (`template`), puis supprimées du serveur après déploiement.
+- Realm `homelab` : groupes `homelab-admins`/`homelab-users`, utilisateur `michou`, client `argocd`. Argo CD : `homelab-admins` = admin, les autres = lecture seule.
+- Choix : Postgres maison (StatefulSet) plutôt que les charts Bitnami (changement de politique sur leurs images) ; HTTP sans TLS pour l'instant (`sslRequired=NONE` sur le realm master, voir [11](11-argocd-keycloak.md)).
+- Piège trouvé : `--import-realm` ignore un realm existant → les clients ajoutés plus tard sont créés par Ansible via `kcadm.sh` (`roles/platform/tasks/post.yml`).
+- Vérifié : login complet scripté (michou → Keycloak → Argo CD), groupes présents dans le token.
+
 ## Suite du journal
 
 Ajoute ici une ligne datée à chaque changement important (nouvelle app, upgrade k3s, panne…).
