@@ -1,0 +1,6 @@
+---
+# Initialise / descelle / configure OpenBao. À relancer après un redémarrage du serveur : make unseal
+- name: OpenBao (init, unseal, SSO)
+  hosts: k3s_server
+  roles:
+    - openbao

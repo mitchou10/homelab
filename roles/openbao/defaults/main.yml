@@ -1,0 +1,12 @@
+---
+openbao_namespace: openbao
+openbao_pod: openbao-0
+# Fichier LOCAL (ignoré par git) contenant la clé de déscellement et le token root. À SAUVEGARDER.
+openbao_init_file: "{{ secrets_dir }}/openbao_init.json"
+# 1 part / seuil 1 : choix homelab (voir docs/12-openbao.md)
+openbao_key_shares: 1
+openbao_key_threshold: 1
+openbao_oidc_client_id: openbao
+openbao_oidc_issuer: "http://keycloak.{{ homelab_domain }}/realms/homelab"
+openbao_ui_callback: "http://openbao.{{ homelab_domain }}/ui/vault/auth/oidc/oidc/callback"
+openbao_cli_callback: "http://localhost:8250/oidc/callback"

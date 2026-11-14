@@ -1,0 +1,116 @@
+---
+# Initialise, descelle et configure OpenBao (idempotent). Aussi lancé seul par `make unseal`.
+- name: Attendre le pod OpenBao
+  ansible.builtin.command: >-
+    k3s kubectl -n {{ openbao_namespace }} wait --for=condition=Ready
+    pod/{{ openbao_pod }} --timeout=300s
+  changed_when: false
+
+- name: État d'OpenBao
+  ansible.builtin.command: >-
+    k3s kubectl -n {{ openbao_namespace }} exec {{ openbao_pod }} --
+    env BAO_ADDR=http://127.0.0.1:8200 bao status -format=json
+  register: bao_status
+  failed_when: bao_status.rc not in [0, 2]
+  changed_when: false
+
+- name: Lire l'état
+  ansible.builtin.set_fact:
+    bao_initialized: "{{ (bao_status.stdout | from_json).initialized }}"
+    bao_sealed: "{{ (bao_status.stdout | from_json).sealed }}"
+
+# ------------------------------------------------------------------ Initialisation
+- name: Initialiser OpenBao (une seule fois)
+  ansible.builtin.command: >-
+    k3s kubectl -n {{ openbao_namespace }} exec {{ openbao_pod }} --
+    env BAO_ADDR=http://127.0.0.1:8200
+    bao operator init -key-shares={{ openbao_key_shares }}
+    -key-threshold={{ openbao_key_threshold }} -format=json
+  register: bao_init
+  when: not bao_initialized
+  no_log: true
+
+# Sauvegarde IMMÉDIATE en local : sans ce fichier, les données sont perdues.
+- name: Enregistrer clé de déscellement et token root (.secrets/, hors git)
+  ansible.builtin.copy:
+    content: "{{ bao_init.stdout }}"
+    dest: "{{ openbao_init_file }}"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+  when: not bao_initialized
+  no_log: true
+
+# ------------------------------------------------------------------ Déscellement
+- name: Vérifier que le fichier d'init est présent
+  ansible.builtin.stat:
+    path: "{{ openbao_init_file }}"
+  delegate_to: localhost
+  become: false
+  register: bao_init_file
+
+- name: Échouer clairement si le fichier d'init est introuvable
+  ansible.builtin.fail:
+    msg: >-
+      OpenBao est initialisé mais {{ openbao_init_file }} est introuvable.
+      Restaure-le depuis ta sauvegarde (voir docs/12-openbao.md).
+  when: not bao_init_file.stat.exists
+
+- name: Lire la clé et le token
+  ansible.builtin.set_fact:
+    bao_init_data: "{{ lookup('ansible.builtin.file', openbao_init_file) | from_json }}"
+  no_log: true
+
+- name: Desceller OpenBao
+  ansible.builtin.command:
+    argv:
+      - k3s
+      - kubectl
+      - -n
+      - "{{ openbao_namespace }}"
+      - exec
+      - -i
+      - "{{ openbao_pod }}"
+      - --
+      - env
+      - BAO_ADDR=http://127.0.0.1:8200
+      - bao
+      - write
+      - sys/unseal
+      - key=-          # "=-" : la clé est lue sur stdin, jamais dans la liste des processus
+    stdin: "{{ bao_init_data.unseal_keys_b64[0] }}"
+  when: bao_sealed or (not bao_initialized)
+  register: bao_unseal
+  changed_when: true
+  no_log: true
+
+- name: Attendre qu'OpenBao soit descellé
+  ansible.builtin.command: >-
+    k3s kubectl -n {{ openbao_namespace }} exec {{ openbao_pod }} --
+    env BAO_ADDR=http://127.0.0.1:8200 bao status -format=json
+  register: bao_status2
+  until: (bao_status2.stdout | from_json).sealed == false
+  retries: 15
+  delay: 4
+  failed_when: false
+  changed_when: false
+
+# ------------------------------------------------------------------ Configuration (SSO, policies, KV)
+- name: Configurer KV, policies et authentification OIDC Keycloak
+  ansible.builtin.command:
+    argv:
+      - k3s
+      - kubectl
+      - -n
+      - "{{ openbao_namespace }}"
+      - exec
+      - -i
+      - "{{ openbao_pod }}"
+      - --
+      - sh
+      - -c
+      - "{{ lookup('ansible.builtin.template', 'configure.sh.j2') }}"
+    stdin: "{{ bao_init_data.root_token }}\n{{ (keycloak_clients | selectattr('id', 'eq', openbao_oidc_client_id) | first).secret }}\n"
+  register: bao_conf
+  changed_when: "'CONFIGURED' in bao_conf.stdout"
+  no_log: true

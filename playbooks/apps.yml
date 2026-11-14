@@ -36,3 +36,7 @@
       ansible.builtin.include_role:
         name: platform
         tasks_from: post
+    # Après Keycloak (le client OIDC "openbao" doit exister)
+    - name: Initialiser, desceller et configurer OpenBao
+      ansible.builtin.include_role:
+        name: openbao

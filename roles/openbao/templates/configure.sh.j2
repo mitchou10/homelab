@@ -1,0 +1,49 @@
+# Exécuté DANS le pod (sh). stdin : 1re ligne = token root, 2e ligne = secret du client OIDC.
+set -eu
+read -r BAO_TOKEN
+read -r OIDC_SECRET
+export BAO_TOKEN BAO_ADDR=http://127.0.0.1:8200
+
+# Moteur de secrets KV v2 monté sur secret/
+bao secrets list -format=json | grep -q '"secret/"' || bao secrets enable -path=secret kv-v2
+
+# Policies
+bao policy write homelab-admin - <<'POLICY'
+path "*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+POLICY
+bao policy write homelab-reader - <<'POLICY'
+path "secret/data/*" {
+  capabilities = ["read", "list"]
+}
+path "secret/metadata/*" {
+  capabilities = ["read", "list"]
+}
+POLICY
+
+# Authentification OIDC (Keycloak)
+bao auth list -format=json | grep -q '"oidc/"' || bao auth enable oidc
+bao write auth/oidc/config \
+  oidc_discovery_url="{{ openbao_oidc_issuer }}" \
+  oidc_client_id="{{ openbao_oidc_client_id }}" \
+  oidc_client_secret="$OIDC_SECRET" \
+  default_role=homelab
+bao write auth/oidc/role/homelab \
+  role_type=oidc \
+  user_claim=preferred_username \
+  groups_claim=groups \
+  oidc_scopes="openid,profile,email" \
+  allowed_redirect_uris="{{ openbao_ui_callback }}" \
+  allowed_redirect_uris="{{ openbao_cli_callback }}" \
+  token_policies=homelab-reader \
+  token_ttl=8h
+
+# Groupe Keycloak "homelab-admins" -> policy admin (groupe externe + alias)
+ACC=$(bao read -field=accessor sys/auth/oidc)
+bao read identity/group/name/homelab-admins >/dev/null 2>&1 || \
+  bao write identity/group name=homelab-admins type=external policies=homelab-admin
+GID=$(bao read -field=id identity/group/name/homelab-admins)
+bao read -field=alias identity/group/name/homelab-admins | grep -q "$ACC" || \
+  bao write identity/group-alias name=homelab-admins mount_accessor="$ACC" canonical_id="$GID"
+echo CONFIGURED
