@@ -39,3 +39,13 @@ helm_releases:
     namespace: argocd
     values_file: argocd.yml
     state: present
+
+  # --- Secrets : OpenBao (fork open source MPL de Vault). Voir docs/12-openbao.md ---
+  - name: openbao
+    chart: openbao/openbao
+    repo_name: openbao
+    repo_url: https://openbao.github.io/openbao-helm
+    version: "0.30.7"
+    namespace: openbao
+    values_file: openbao.yml
+    state: present

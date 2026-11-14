@@ -1,0 +1,39 @@
+---
+# Voir docs/12-openbao.md (pourquoi OpenBao, init/unseal, SSO)
+global:
+  tlsDisable: true          # HTTP pour l'instant (comme le reste du homelab)
+
+injector:
+  enabled: false            # pas d'injection d'agent : on utilisera External Secrets plus tard
+
+ui:
+  enabled: true
+
+server:
+  # Un pod scellé (ou non initialisé) doit être considéré "prêt" : sinon `helm --wait`
+  # bloque, car OpenBao n'est descellé qu'APRÈS son déploiement (rôle openbao).
+  readinessProbe:
+    enabled: true
+    path: "/v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204"
+
+  # 1 réplique avec stockage raft intégré : permet les snapshots de sauvegarde
+  # et d'ajouter des répliques plus tard sans migrer le stockage.
+  ha:
+    enabled: true
+    replicas: 1
+    raft:
+      enabled: true
+      setNodeId: true
+
+  dataStorage:
+    enabled: true
+    size: 2Gi
+    storageClass: local-path
+
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    activeService: true
+    hosts:
+      - host: "openbao.{{ homelab_domain }}"
+        paths: []
