@@ -1,0 +1,17 @@
+---
+# KEDA : opérateur + serveur de métriques externes + webhook d'admission + CRD (ScaledObject, ScaledJob...).
+# Cohabite avec le metrics-server de k3s (metrics.k8s.io) : KEDA expose external.metrics.k8s.io.
+# Voir docs/14-keda.md
+crds:
+  install: true
+
+resources:
+  operator:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {memory: 1Gi}
+  metricServer:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {memory: 1Gi}
+  webhooks:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {memory: 256Mi}

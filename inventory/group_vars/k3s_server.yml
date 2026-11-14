@@ -59,3 +59,13 @@ helm_releases:
     namespace: external-secrets
     values_file: external-secrets.yml
     state: present
+
+  # --- Autoscaling piloté par les événements (files, cron, métriques...). Voir docs/14-keda.md ---
+  - name: keda
+    chart: kedacore/keda
+    repo_name: kedacore
+    repo_url: https://kedacore.github.io/charts
+    version: "2.21.0"
+    namespace: keda
+    values_file: keda.yml
+    state: present
