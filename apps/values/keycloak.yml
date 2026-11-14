@@ -1,0 +1,60 @@
+---
+# Fichier rendu par Ansible (Jinja) puis lu par Helm. Voir docs/11-argocd-keycloak.md
+replicas: 1
+
+http:
+  relativePath: "/"
+
+# Le realm "homelab" est importé au démarrage depuis le Secret keycloak-realm
+args:
+  - start
+  - --import-realm
+
+database:
+  vendor: postgres
+  hostname: keycloak-postgres
+  port: 5432
+  database: keycloak
+  username: keycloak
+  existingSecret: keycloak-db
+  existingSecretKey: password
+
+extraEnv: |
+  - name: KC_HOSTNAME
+    value: "http://keycloak.{{ homelab_domain }}"
+  - name: KC_HOSTNAME_STRICT
+    value: "false"
+  - name: KC_BOOTSTRAP_ADMIN_USERNAME
+    value: "{{ keycloak_admin_user }}"
+  - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-admin
+        key: password
+
+extraVolumes: |
+  - name: realm-import
+    secret:
+      secretName: keycloak-realm
+
+extraVolumeMounts: |
+  - name: realm-import
+    mountPath: /opt/keycloak/data/import
+    readOnly: true
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 768Mi
+  limits:
+    memory: 1536Mi
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  rules:
+    - host: "keycloak.{{ homelab_domain }}"
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
