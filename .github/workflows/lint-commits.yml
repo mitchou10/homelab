@@ -1,0 +1,13 @@
+name: Lint commits
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  lint-commits:
+    uses: Mitchou10/github-workflow/.github/workflows/lint-commits.yml@v0
+    permissions:
+      contents: read
+    with:
+      LINT_PR_TITLE: true # squash merge : le titre de la PR devient le commit
