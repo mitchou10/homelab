@@ -90,6 +90,13 @@ Historique de la mise en place initiale (14 novembre 2026), pour se souvenir **q
 - Documentation du flux complet : [13](13-deployer-une-application.md).
 - Cause d'une erreur d'une appli déployée à la main dans Argo CD : namespace de destination absent, puis chart dépendant du Vault Secrets Operator (voir tableau d'erreurs de [13](13-deployer-une-application.md)).
 
+## 2026-11-14 (suite) — KEDA
+
+- Ajout de **KEDA** (chart 2.21.0, namespace `keda`) : opérateur, serveur de métriques externes, webhook, CRD. Cohabite avec le metrics-server de k3s.
+- Documentation [14](14-keda.md) avec 4 exemples (file Redis/Celery, cron, CPU, ScaledJob). Les 5 objets d'exemple sont validés par le webhook de KEDA.
+- Essai réel : worker à 0 pod → 4 pods en moins de 10 s avec 20 messages Redis (mot de passe via `TriggerAuthentication`), puis retour à 0 après le `cooldownPeriod`. Namespace de test supprimé.
+- Les `ScaledObject` vivent **avec les applications**, pas dans ce dépôt (infra uniquement).
+
 ## Suite du journal
 
 Ajoute ici une ligne datée à chaque changement important (nouvelle app, upgrade k3s, panne…).

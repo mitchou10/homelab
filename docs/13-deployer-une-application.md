@@ -20,6 +20,7 @@ Argo CD la lit, la déploie et détecte les changements.
 | Connexion SSO | Keycloak (realm `homelab`) | un client OIDC (voir plus bas) |
 | Noms de domaine | CoreDNS interne | `*.homelab.local` résolu vers Traefik **dans** le cluster |
 | GPU | device plugin NVIDIA | `runtimeClassName: nvidia` + `nvidia.com/gpu: 1` |
+| Autoscaling | KEDA | un `ScaledObject` à côté de l'appli (file, cron, scale to zero) : voir [14](14-keda.md) |
 
 ## 1. Le dépôt de l'application contient
 

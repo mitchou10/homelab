@@ -17,6 +17,7 @@ Ce dépôt permet de **reconstruire tout le homelab depuis zéro** : on part d'u
 | GPU | Quadro P4000, driver 580, CUDA 12.6, exposé à k3s (`nvidia.com/gpu`) |
 | SSO | Keycloak (realm `homelab`), connecté à Argo CD |
 | GitOps | Argo CD |
+| Autoscaling | KEDA (workers sur file Redis, cron, jobs, scale to zero) |
 | Secrets | OpenBao (SSO Keycloak) + External Secrets, **à desceller après un redémarrage : `make unseal`** |
 | Apps | `whoami` (test), `nvidia-device-plugin` |
 
@@ -37,6 +38,7 @@ Lis-les dans cet ordre si tu repars de zéro :
 11. [docs/11-argocd-keycloak.md](docs/11-argocd-keycloak.md) — Argo CD, Keycloak et SSO
 12. [docs/12-openbao.md](docs/12-openbao.md) — OpenBao (secrets), pourquoi pas Vault, unseal
 13. [docs/13-deployer-une-application.md](docs/13-deployer-une-application.md) — déployer une appli (GitOps, secrets, SSO, ingress)
+14. [docs/14-keda.md](docs/14-keda.md) — KEDA : autoscaling par événements (files, cron, jobs), avec exemples
 
 ## Version express (si tout est déjà prêt)
 

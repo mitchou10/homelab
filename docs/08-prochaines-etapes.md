@@ -26,3 +26,5 @@ Idées classées par priorité. Coche au fur et à mesure.
 - [x] External Secrets Operator + auth Kubernetes d'OpenBao (fait, voir [13](13-deployer-une-application.md))
 - [ ] Isoler les secrets par application (un SecretStore et un rôle OpenBao par namespace)
 - [ ] Durcir le descellement : plusieurs parts de clé ou auto-unseal ; révoquer le token root
+- [ ] **Prometheus** (kube-prometheus-stack) : monitoring, et déclencheur `prometheus` de KEDA
+- [ ] Extension **keda-add-ons-http** si on veut du scale to zero sur des appli web selon les requêtes
