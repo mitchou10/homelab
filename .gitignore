@@ -1,0 +1,7 @@
+kubeconfig/*
+!kubeconfig/README.md
+!kubeconfig/.gitkeep
+*.retry
+.vault_pass
+vault.yml
+.venv/
