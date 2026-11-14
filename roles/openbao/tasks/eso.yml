@@ -1,0 +1,26 @@
+---
+# Relie External Secrets Operator à OpenBao : un ClusterSecretStore "openbao" que toute application peut
+# référencer. Authentification Kubernetes (rôle "eso" d'OpenBao, voir configure.sh.j2) : aucun mot de passe.
+# Lancé après le déploiement Helm d'external-secrets (les CRD doivent exister).
+- name: ClusterSecretStore openbao
+  kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    state: present
+    definition:
+      apiVersion: external-secrets.io/v1
+      kind: ClusterSecretStore
+      metadata:
+        name: openbao
+      spec:
+        provider:
+          vault:
+            server: "http://openbao.{{ openbao_namespace }}.svc.cluster.local:8200"
+            path: secret
+            version: v2
+            auth:
+              kubernetes:
+                mountPath: kubernetes
+                role: eso
+                serviceAccountRef:
+                  name: external-secrets
+                  namespace: external-secrets

@@ -49,3 +49,13 @@ helm_releases:
     namespace: openbao
     values_file: openbao.yml
     state: present
+
+  # --- Lit les secrets d'OpenBao et crée les Secrets Kubernetes (licence Apache 2.0) ---
+  - name: external-secrets
+    chart: external-secrets/external-secrets
+    repo_name: external-secrets
+    repo_url: https://charts.external-secrets.io
+    version: "2.15.0"
+    namespace: external-secrets
+    values_file: external-secrets.yml
+    state: present

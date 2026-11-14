@@ -40,3 +40,8 @@
     - name: Initialiser, desceller et configurer OpenBao
       ansible.builtin.include_role:
         name: openbao
+    # Relie External Secrets à OpenBao (ClusterSecretStore) : nécessite OpenBao descellé et configuré
+    - name: ClusterSecretStore External Secrets -> OpenBao
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: eso
