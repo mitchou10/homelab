@@ -1,0 +1,32 @@
+# Application Argo CD de `monapp`. À appliquer UNE fois :
+#   ssh tour 'sudo k3s kubectl apply -f -' < application.yaml
+# Ensuite Argo CD détecte tout push du dépôt de l'appli (sondage toutes les 3 minutes).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monapp
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<toi>/monapp.git
+    targetRevision: HEAD
+    path: helm
+    helm:
+      valueFiles:
+        - values.yaml
+        - values/homelab.yaml        # <- le fichier values-homelab.yaml de ce dossier, copié dans le dépôt de l'appli
+      # Variante sans rien pousser dans le dépôt de l'appli : mettre le contenu de values-homelab.yaml ici,
+      # en YAML, sous `valuesObject:` (et retirer la ligne values/homelab.yaml ci-dessus).
+      # valuesObject:
+      #   global: {...}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monapp                # OBLIGATOIRE : sans lui, « Namespace … is missing »
+  syncPolicy:
+    automated:
+      prune: true                    # supprime ce qui a disparu de git
+      selfHeal: true                 # annule les modifications faites à la main
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground

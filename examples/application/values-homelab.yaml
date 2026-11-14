@@ -1,0 +1,55 @@
+# Valeurs HOMELAB de `monapp`, posées par-dessus le values.yaml du chart.
+# À adapter : les clés exactes dépendent du chart de l'appli (ici : ingress global, ConfigMap du backend, extraObjects).
+#
+# Ce que ce fichier remplace par rapport à des values « d'entreprise » :
+#   - registre privé (Harbor...)        -> images publiques (ou imagePullSecret)
+#   - Vault Secrets Operator            -> External Secrets + OpenBao (ce fichier)
+#   - ingress nginx                     -> Traefik
+#   - HTTPS partout                     -> HTTP pour l'instant (cookie « Secure » désactivé)
+
+# --- Ingress Traefik --------------------------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: traefik                  # le défaut est souvent "" : sans ça, rien ne route
+  hosts:
+    - name: monapp.homelab.local      # à ajouter dans /etc/hosts du PC
+      paths:
+        - {path: /api, pathType: Prefix, backend: {serviceName: monapp-backend, portNumber: 8000}}
+        - {path: /,    pathType: Prefix, backend: {serviceName: monapp-frontend, portNumber: 8080}}
+
+# --- Connexion SSO Keycloak (client OIDC "monapp" à créer dans le realm homelab) --------------------------------
+backend:
+  envCm:
+    KEYCLOAK_URL: "http://keycloak.homelab.local"     # résolu vers Traefik dans le cluster (DNS interne)
+    KEYCLOAK_REALM: "homelab"
+    KEYCLOAK_CLIENT_ID: "monapp"
+    BACKEND_PUBLIC_URL: "http://monapp.homelab.local"
+    FRONTEND_URL: "http://monapp.homelab.local"
+    SESSION_COOKIE_SECURE: "false"                    # tant qu'il n'y a pas de HTTPS
+  envFrom:
+    - secretRef: {name: monapp-secrets}               # le Secret créé par l'ExternalSecret ci-dessous
+
+# --- Secrets lus dans OpenBao (secret/monapp), via le ClusterSecretStore "openbao" ------------------------------
+# Si le chart accepte `extraObjects`, on peut y mettre l'ExternalSecret. Les {{ "{{" }} ... {{ "}}" }} échappent la
+# syntaxe Helm : External Secrets reçoit des {{ .CLE }}. Hors Helm (manifest brut), écrire directement {{ .CLE }}.
+extraObjects:
+  monapp-secrets:
+    apiVersion: external-secrets.io/v1
+    kind: ExternalSecret
+    metadata:
+      name: monapp-secrets
+    spec:
+      refreshInterval: 1h
+      secretStoreRef: {kind: ClusterSecretStore, name: openbao}
+      target:
+        name: monapp-secrets           # nom du Secret Kubernetes créé
+        creationPolicy: Owner
+        template:
+          engineVersion: v2
+          data:
+            # on peut composer une valeur à partir de plusieurs clés d'OpenBao :
+            DATABASE_URL: 'postgresql://app:{{ "{{" }} .DB_PASSWORD {{ "}}" }}@monapp-postgres:5432/app'
+            KEYCLOAK_CLIENT_SECRET: '{{ "{{" }} .KEYCLOAK_CLIENT_SECRET {{ "}}" }}'
+            API_KEY: '{{ "{{" }} .API_KEY {{ "}}" }}'
+      dataFrom:
+        - extract: {key: monapp}       # = secret/monapp dans OpenBao
