@@ -55,7 +55,7 @@ navigateur ──► argocd.homelab.local ──► Traefik ──► Argo CD
                     ▼
             keycloak.homelab.local ──► Traefik ──► Keycloak ──► Postgres
 ```
-Argo CD (dans le cluster) doit aussi joindre `keycloak.homelab.local` pour valider les tokens. Dans le cluster, ce nom n'existe pas : le rôle `platform` ajoute donc une ConfigMap `coredns-custom` qui redirige **tout `*.homelab.local` vers Traefik**. L'adresse (issuer) est ainsi la même vue du navigateur et du cluster.
+Argo CD (dans le cluster) doit aussi joindre `keycloak.homelab.local` pour valider les tokens. Dans le cluster, ce nom n'existe pas : le rôle `platform` ajoute donc une ConfigMap `coredns-custom` : une zone `homelab.local` qui répond **l'IP de Traefik pour tout `*.homelab.local`** (vrai enregistrement A, pas un `rewrite` : voir [06](06-depannage.md)). L'adresse (issuer) est ainsi la même vue du navigateur et du cluster.
 
 ## Utiliser Argo CD
 

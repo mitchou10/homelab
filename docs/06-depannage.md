@@ -102,7 +102,7 @@ Le realm `master` impose HTTPS hors localhost. `make apps` le désactive (`sslRe
 ## Argo CD : « Log in via Keycloak » échoue / erreur OIDC
 
 - Les noms `keycloak.homelab.local` et `argocd.homelab.local` sont-ils dans le `/etc/hosts` de ton PC ?
-- Dans le cluster : `ssh tour 'sudo k3s kubectl run t --rm -i --restart=Never --image=busybox:1.36 -- nslookup keycloak.homelab.local'` doit répondre `traefik.kube-system.svc...` (sinon `kubectl -n kube-system rollout restart deploy/coredns`).
+- Dans le cluster : `ssh tour 'sudo k3s kubectl run t --rm -i --restart=Never --image=busybox:1.36 -- nslookup keycloak.homelab.local'` doit répondre l'IP de Traefik (`10.43.x.x`), sinon `kubectl -n kube-system rollout restart deploy/coredns` ou relancer `make apps`.
 - `kubectl -n argocd logs deploy/argocd-server | grep -i oidc`
 - Le secret du client doit être identique des deux côtés : il vient de `.secrets/client_argocd_secret`. Relancer `make apps` resynchronise tout.
 
@@ -117,3 +117,12 @@ Normal après un redémarrage : `make unseal`. Si le fichier `.secrets/openbao_i
 ## OpenBao : connexion OIDC refusée (« redirect_uri » invalide)
 
 L'URL de callback doit être déclarée dans le client Keycloak `openbao` (`keycloak_clients` dans `inventory/group_vars/all.yml`) **et** dans le rôle OIDC (`configure.sh.j2`). Pour modifier un client existant : console admin Keycloak (le playbook ne met à jour que la création).
+
+## Une appli ne joint pas `keycloak.homelab.local` : « Name or service not known » (alors qu'Argo CD y arrive)
+
+**Cause :** la première version du DNS interne utilisait un `rewrite` CoreDNS vers le service Traefik. La réponse portait alors le nom `traefik.kube-system…`
+et non le nom demandé : les clients **Go** l'acceptent (Argo CD, OpenBao), pas le résolveur **glibc** (Python, curl, Node…), qui l'ignore.
+Symptôme vu : connexion SSO refusée avec « Login failed » côté application, alors que Keycloak accepte le mot de passe.
+**Solution (déjà dans le rôle `platform`) :** une zone `homelab.local` avec un vrai enregistrement A vers l'IP du service Traefik (+ réponse vide pour l'IPv6).
+Test depuis un pod : `python -c "import socket;print(socket.getaddrinfo('keycloak.homelab.local',80))"`.
+Si l'IP du service Traefik change (réinstallation), relancer `make apps` met la zone à jour.

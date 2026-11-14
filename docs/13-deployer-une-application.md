@@ -121,3 +121,6 @@ scopes `openid profile email`, groupes dans le claim `groups`.
 | `ImagePullBackOff` sur un registre privé | values d'un autre environnement | utiliser les images publiques, ou un `imagePullSecret` |
 | `CreateContainerConfigError` | Secret absent (ExternalSecret pas encore synchronisé, ou clé manquante dans OpenBao) | `kubectl describe externalsecret`, vérifier `secret/<app>` dans OpenBao |
 | Pods `Pending`, OpenBao `sealed` | OpenBao scellé après un redémarrage | `make unseal` |
+| Connexion SSO : `Login failed` / `Name or service not known` | l'appli ne résout pas `keycloak.homelab.local` depuis le cluster | DNS interne : voir [06](06-depannage.md) ; `make apps` |
+| Erreur Argo CD qui persiste après correction des values | l'ancienne opération de synchro continue de réessayer | `kubectl -n argocd patch application <nom> --type merge -p '{"operation":null}'` puis refresh hard |
+| `kubectl` / interface : l'Application garde l'erreur `secrets.hashicorp.com` | values d'entreprise encore utilisées | remplacer `values/common-values.yaml` par des values sans Vault (voir ci-dessus) |

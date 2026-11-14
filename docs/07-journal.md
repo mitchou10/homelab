@@ -97,6 +97,14 @@ Historique de la mise en place initiale (14 novembre 2026), pour se souvenir **q
 - Essai réel : worker à 0 pod → 4 pods en moins de 10 s avec 20 messages Redis (mot de passe via `TriggerAuthentication`), puis retour à 0 après le `cooldownPeriod`. Namespace de test supprimé.
 - Les `ScaledObject` vivent **avec les applications**, pas dans ce dépôt (infra uniquement).
 
+## 2026-11-14 (suite) — Premier déploiement applicatif réel et correction du DNS interne
+
+- Une application (déployée depuis son propre dépôt, namespace `croque`) a échoué avec l'erreur `secrets.hashicorp.com/v1beta1` : elle utilisait des values d'une autre plateforme (Vault Secrets Operator). Remplacées par des values homelab (ingress Traefik, secrets via External Secrets et OpenBao, images publiques), injectées dans l'Application.
+- Résultat vérifié : 10 pods `Running`, 4 ExternalSecrets `SecretSynced`, migration de base réussie, application `Synced/Healthy`.
+- **Bug d'infra trouvé** par ce déploiement : le `rewrite` CoreDNS ne marchait pas pour les clients glibc (« Name or service not known ») → remplacé par une zone avec un enregistrement A vers Traefik (voir [06](06-depannage.md)). Argo CD et OpenBao ne l'avaient pas révélé car les clients Go sont plus tolérants.
+- Vérifié : login SSO complet (Keycloak → application → `/api/auth/me` : rôles `admin`/`user`, groupes `homelab-admins`).
+- Si une synchro Argo CD reste bloquée sur l'ancienne erreur après correction : arrêter l'opération (`operation: null`) puis refresh hard.
+
 ## Suite du journal
 
 Ajoute ici une ligne datée à chaque changement important (nouvelle app, upgrade k3s, panne…).
