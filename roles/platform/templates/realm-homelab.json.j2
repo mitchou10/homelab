@@ -1,0 +1,39 @@
+{
+  "realm": "homelab",
+  "displayName": "Homelab",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 36000,
+  "ssoSessionMaxLifespan": 86400,
+  "groups": [
+    { "name": "homelab-admins" },
+    { "name": "homelab-users" }
+  ],
+  "defaultGroups": ["/homelab-users"],
+  "users": [
+    {
+      "username": {{ homelab_user | to_json }},
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": {{ homelab_user | capitalize | to_json }},
+      "lastName": "Homelab",
+      "email": {{ (homelab_user ~ '@' ~ homelab_domain) | to_json }},
+      "credentials": [
+        { "type": "password", "value": {{ homelab_user_password | to_json }}, "temporary": false }
+      ],
+      "groups": ["/homelab-admins", "/homelab-users"]
+    }
+  ],
+  "clients": [
+{% for c in keycloak_clients %}
+{% include "client.json.j2" %}{{ "," if not loop.last else "" }}
+{% endfor %}
+  ]
+}

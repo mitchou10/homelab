@@ -1,0 +1,65 @@
+---
+# Après le déploiement de Keycloak : autoriser la console d'admin (realm master) en HTTP.
+# Par défaut Keycloak impose HTTPS pour le realm master depuis une autre machine que lui-même.
+# Sans TLS (homelab), on le désactive. À retirer quand on passera en HTTPS.
+- name: Attendre que Keycloak soit prêt
+  ansible.builtin.command: k3s kubectl -n keycloak rollout status statefulset/keycloak-keycloakx --timeout=600s
+  changed_when: false
+
+- name: Realm master - désactiver l'obligation HTTPS
+  ansible.builtin.command:
+    argv:
+      - k3s
+      - kubectl
+      - -n
+      - keycloak
+      - exec
+      - statefulset/keycloak-keycloakx
+      - --
+      - bash
+      - -c
+      - |
+        set -e
+        K=/opt/keycloak/bin/kcadm.sh
+        $K config credentials --config /tmp/kcadm.config --server http://localhost:8080 \
+          --realm master --user "$KC_BOOTSTRAP_ADMIN_USERNAME" --password "$KC_BOOTSTRAP_ADMIN_PASSWORD"
+        $K update realms/master --config /tmp/kcadm.config -s sslRequired=NONE
+        rm -f /tmp/kcadm.config
+  changed_when: false
+  no_log: true
+
+# Keycloak n'importe le realm qu'au PREMIER démarrage (--import-realm ignore un realm existant).
+# On crée donc ici les clients OIDC manquants, pour pouvoir en ajouter plus tard dans keycloak_clients.
+- name: Créer les clients OIDC manquants dans le realm homelab
+  ansible.builtin.command:
+    argv:
+      - k3s
+      - kubectl
+      - -n
+      - keycloak
+      - exec
+      - -i
+      - statefulset/keycloak-keycloakx
+      - --
+      - bash
+      - -c
+      - |
+        set -e
+        K=/opt/keycloak/bin/kcadm.sh
+        $K config credentials --config /tmp/kcadm.config --server http://localhost:8080 \
+          --realm master --user "$KC_BOOTSTRAP_ADMIN_USERNAME" --password "$KC_BOOTSTRAP_ADMIN_PASSWORD"
+        found=$($K get clients --config /tmp/kcadm.config -r homelab -q clientId={{ c.id }} --fields id --format csv --noquotes)
+        if [ -z "$found" ]; then
+          $K create clients --config /tmp/kcadm.config -r homelab -f -
+          echo CREATED
+        fi
+        rm -f /tmp/kcadm.config
+  args:
+    stdin: "{{ lookup('ansible.builtin.template', 'client.json.j2') }}"
+  loop: "{{ keycloak_clients }}"
+  loop_control:
+    loop_var: c
+    label: "{{ c.id }}"
+  register: kc_client
+  changed_when: "'CREATED' in kc_client.stdout"
+  no_log: true

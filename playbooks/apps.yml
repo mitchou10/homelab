@@ -29,4 +29,10 @@
               nvidia.com/gpu.present: "true"
       when: "'gpu' in group_names"
   roles:
+    - platform
     - helm_apps
+  post_tasks:
+    - name: Configuration post-déploiement de Keycloak
+      ansible.builtin.include_role:
+        name: platform
+        tasks_from: post

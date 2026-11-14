@@ -1,0 +1,60 @@
+---
+# Prépare tout ce dont dépendent Keycloak et Argo CD AVANT leur déploiement Helm :
+# DNS interne, namespaces, secrets, Postgres, realm Keycloak.
+
+- name: DNS interne - *.{{ homelab_domain }} résolu vers Traefik dans le cluster
+  kubernetes.core.k8s:
+    kubeconfig: "{{ platform_kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: coredns-custom
+        namespace: kube-system
+      data:
+        homelab.override: |
+          rewrite name regex (.*)\.{{ homelab_domain | regex_replace('\.', '\\.') }} traefik.kube-system.svc.cluster.local
+  register: coredns_custom
+
+- name: Redémarrer CoreDNS pour prendre en compte la config
+  ansible.builtin.command: k3s kubectl -n kube-system rollout restart deployment/coredns
+  when: coredns_custom.changed
+  changed_when: true
+
+- name: Namespaces
+  kubernetes.core.k8s:
+    kubeconfig: "{{ platform_kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ item }}"
+  loop: [keycloak, argocd]
+
+- name: Secrets Keycloak (admin, base de données, realm)
+  kubernetes.core.k8s:
+    kubeconfig: "{{ platform_kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ item.name }}"
+        namespace: keycloak
+      type: Opaque
+      stringData: "{{ item.data }}"
+  loop:
+    - { name: keycloak-admin, data: { password: "{{ keycloak_admin_password }}" } }
+    - { name: keycloak-db, data: { password: "{{ keycloak_db_password }}" } }
+    - { name: keycloak-realm, data: { homelab-realm.json: "{{ lookup('template', 'realm-homelab.json.j2') }}" } }
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+
+- name: Postgres pour Keycloak
+  kubernetes.core.k8s:
+    kubeconfig: "{{ platform_kubeconfig }}"
+    state: present
+    definition: "{{ lookup('template', 'postgres.yml.j2') | from_yaml_all | list }}"
