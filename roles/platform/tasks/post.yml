@@ -63,3 +63,39 @@
   register: kc_client
   changed_when: "'CREATED' in kc_client.stdout"
   no_log: true
+
+# Rôles de client (ex. admin/user d'une application) et affectation à l'utilisateur par défaut.
+# Idempotent : on ne crée un rôle que s'il manque, add-roles est sans effet s'il est déjà donné.
+- name: Rôles de client Keycloak et rôles de l'utilisateur par défaut
+  ansible.builtin.command:
+    argv:
+      - k3s
+      - kubectl
+      - -n
+      - keycloak
+      - exec
+      - statefulset/keycloak-keycloakx
+      - --
+      - bash
+      - -c
+      - |
+        set -e
+        K=/opt/keycloak/bin/kcadm.sh
+        $K config credentials --config /tmp/kcadm.config --server http://localhost:8080 \
+          --realm master --user "$KC_BOOTSTRAP_ADMIN_USERNAME" --password "$KC_BOOTSTRAP_ADMIN_PASSWORD"
+        for r in {{ c.client_roles | join(' ') }}; do
+          have=$($K get-roles --config /tmp/kcadm.config -r homelab --cclientid {{ c.id }} --fields name --format csv --noquotes | grep -x "$r" || true)
+          [ -n "$have" ] || { $K create clients/$($K get clients --config /tmp/kcadm.config -r homelab -q clientId={{ c.id }} --fields id --format csv --noquotes)/roles --config /tmp/kcadm.config -r homelab -s name=$r; echo CREATED; }
+        done
+        {% if c.user_roles | default([]) | length > 0 %}
+        $K add-roles --config /tmp/kcadm.config -r homelab --uusername {{ homelab_user }} --cclientid {{ c.id }} {% for r in c.user_roles %}--rolename {{ r }} {% endfor %}
+
+        {% endif %}
+        rm -f /tmp/kcadm.config
+  loop: "{{ keycloak_clients | selectattr('client_roles', 'defined') | list }}"
+  loop_control:
+    loop_var: c
+    label: "{{ c.id }}"
+  register: kc_roles
+  changed_when: "'CREATED' in kc_roles.stdout"
+  no_log: true

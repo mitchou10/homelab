@@ -10,7 +10,7 @@
   "rootUrl": {{ c.root_url | to_json }},
   "redirectUris": {{ c.redirect_uris | to_json }},
   "webOrigins": ["+"],
-  "attributes": { "post.logout.redirect.uris": "+" },
+  "attributes": {{ ({'post.logout.redirect.uris': '+'} | combine(c.attributes | default({}))) | to_json }},
   "protocolMappers": [
     {
       "name": "groups",
@@ -18,11 +18,26 @@
       "protocolMapper": "oidc-group-membership-mapper",
       "config": {
         "claim.name": "groups",
-        "full.path": "false",
+        "full.path": {{ (c.groups_full_path | default(false) | bool | string | lower) | to_json }},
         "id.token.claim": "true",
         "access.token.claim": "true",
         "userinfo.token.claim": "true"
       }
-    }
+    }{% if c.client_roles | default([]) | length > 0 %},
+    {
+      "name": "client-roles",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-client-role-mapper",
+      "config": {
+        "usermodel.clientRoleMapping.clientId": {{ c.id | to_json }},
+        "claim.name": {{ ('resource_access.' ~ c.id ~ '.roles') | to_json }},
+        "jsonType.label": "String",
+        "multivalued": "true",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "userinfo.token.claim": "true"
+      }
+    }{% endif %}
+
   ]
 }
